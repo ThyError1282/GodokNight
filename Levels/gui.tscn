@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://djh8oamja6mhx"]
+
+[ext_resource type="Script" uid="uid://bww4qj2tvd88g" path="res://Scripts/gui.gd" id="1_xp08r"]
+[ext_resource type="Texture2D" uid="uid://csxkx72lioyhh" path="res://Assets/UI/Sprites/HeartSpriteSheet.png" id="1_yvrh5"]
+[ext_resource type="Texture2D" uid="uid://t7ic4jk1ua32" path="res://Assets/Art/soul_bar.png" id="3_88sjw"]
+
+[node name="Gui" type="CanvasLayer" unique_id=1986954563]
+process_mode = 3
+script = ExtResource("1_xp08r")
+
+[node name="Heart" type="Sprite2D" parent="." unique_id=111587640]
+position = Vector2(100, 50)
+scale = Vector2(2, 2)
+texture = ExtResource("1_yvrh5")
+hframes = 5
+
+[node name="SoulBar" type="Sprite2D" parent="." unique_id=621453368]
+position = Vector2(50, 50)
+texture = ExtResource("3_88sjw")
+hframes = 5

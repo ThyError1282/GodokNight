@@ -21,14 +21,24 @@ class_name PlayerController extends CharacterBody2D
 @export var dash_gravity: int = 0
 @export var dash_number: int = 1
 
+@export_category("Attacking")
+@export var is_attacking: bool = false
+
 @onready var detection: RayCast2D = $Raycast/Detection
 @onready var animation_player: AnimationPlayer = $AnimationPlayer
+@onready var sword_collider: CollisionShape2D = $Sword/SwordCollider
 
 var dash_key_pressed: int = 0
 var is_dashing: bool = false
 var is_wall_jumping: bool = false
 var movement = Vector2()
 var dash_timer = Timer
+var hold_time: float = 1.5
+var hold_timer: float = 0.0
+var is_holding: bool = false
+
+func _ready() -> void:
+	sword_collider.disabled = true
 
 func _physics_process(delta: float) -> void:
 	if is_dashing == false:
@@ -38,12 +48,18 @@ func _physics_process(delta: float) -> void:
 	
 	horizontal_movement()
 	jump_logic()
+	death_check()
 	wall_logic()
 	
 	set_animations()
 	flip()
+	charging_soul(delta)
 	
 	move_and_slide()
+
+func _input(_event: InputEvent) -> void:
+	if Input.is_action_just_pressed("ui_sword"):
+		is_attacking = true
 
 func horizontal_movement() -> void:
 	if is_wall_jumping == false and is_dashing == false:
@@ -59,16 +75,19 @@ func horizontal_movement() -> void:
 		dash()
 
 func set_animations() -> void:
-	if velocity.x != 0:
-		animation_player.play("move")
-	if velocity.x == 0:
-		animation_player.play("idle")
-	if velocity.y < 0:
-		animation_player.play("jump")
-	if velocity.y > 10:
-		animation_player.play("fall")
-	if is_on_wall_only():
-		animation_player.play("fall")
+	if is_attacking == false:
+		if velocity.x != 0:
+			animation_player.play("move")
+		if velocity.x == 0:
+			animation_player.play("idle")
+		if velocity.y < 0:
+			animation_player.play("jump")
+		if velocity.y > 10:
+			animation_player.play("fall")
+		if is_on_wall_only():
+			animation_player.play("fall")
+	if is_attacking:
+		animation_player.play("sword")
 
 func flip() -> void:
 	if velocity.x > 0.0:
@@ -135,3 +154,45 @@ func dash_started() -> void:
 		dash_key_pressed = 0
 	else:
 		return
+
+func reset_state() -> void:
+	is_attacking = false
+
+func death_check() -> void:
+	if Globals.health <= 0:
+		dead()
+	else:
+		return
+
+func dead() -> void:
+	get_tree().reload_current_scene()
+	Globals.health = 4
+
+func charging_soul(delta: float) -> void:
+	if Globals.health == 4:
+		return
+	
+	if not is_on_floor():
+		return
+	
+	if Input.is_action_just_pressed("soul_charge"):
+		is_holding = true
+		hold_timer = 0.0
+	
+	if is_holding:
+		velocity = Vector2.ZERO
+		animation_player.play("idle")
+		if Input.is_action_pressed("soul_charge") and hold_timer <= hold_time:
+			hold_timer += delta
+		else:
+			if hold_timer >= hold_time:
+				can_charge_soul()
+			is_holding = false
+			hold_timer = 0.0
+
+func can_charge_soul() -> void:
+	if Globals.soul >= 0.25:
+		Globals.health += 1
+		Globals.soul -= 0.25
+	else:
+		pass
