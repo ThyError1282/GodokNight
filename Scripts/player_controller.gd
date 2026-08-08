@@ -27,6 +27,7 @@ class_name PlayerController extends CharacterBody2D
 @onready var detection: RayCast2D = $Raycast/Detection
 @onready var animation_player: AnimationPlayer = $AnimationPlayer
 @onready var sword_collider: CollisionShape2D = $Sword/SwordCollider
+@onready var death_control: AnimationPlayer = $"../DeathControl"
 
 var dash_key_pressed: int = 0
 var is_dashing: bool = false
@@ -36,9 +37,13 @@ var dash_timer = Timer
 var hold_time: float = 1.5
 var hold_timer: float = 0.0
 var is_holding: bool = false
+var is_dead: bool = false
 
 func _ready() -> void:
+	death_control.play("death_screen")
+	await(get_tree().create_timer(1.0).timeout)
 	sword_collider.disabled = true
+	is_dead = false
 
 func _physics_process(delta: float) -> void:
 	if is_dashing == false:
@@ -62,7 +67,7 @@ func _input(_event: InputEvent) -> void:
 		is_attacking = true
 
 func horizontal_movement() -> void:
-	if is_wall_jumping == false and is_dashing == false:
+	if is_wall_jumping == false and is_dashing == false and is_dead == false:
 		movement = Input.get_axis("ui_left", "ui_right")
 		
 		if movement:
@@ -75,7 +80,7 @@ func horizontal_movement() -> void:
 		dash()
 
 func set_animations() -> void:
-	if is_attacking == false:
+	if is_attacking == false and is_dead == false:
 		if velocity.x != 0:
 			animation_player.play("move")
 		if velocity.x == 0:
@@ -86,7 +91,7 @@ func set_animations() -> void:
 			animation_player.play("fall")
 		if is_on_wall_only():
 			animation_player.play("fall")
-	if is_attacking:
+	if is_attacking and is_dead == false:
 		animation_player.play("sword")
 
 func flip() -> void:
@@ -160,13 +165,19 @@ func reset_state() -> void:
 
 func death_check() -> void:
 	if Globals.health <= 0:
+		is_dead = true
 		dead()
 	else:
 		return
 
 func dead() -> void:
+	is_dead = true
+	velocity = Vector2(0, 100)
+	animation_player.play("death")
+	await(get_tree().create_timer(2.2).timeout)
 	get_tree().reload_current_scene()
 	Globals.health = 4
+	is_dead = false
 
 func charging_soul(delta: float) -> void:
 	if Globals.health == 4:

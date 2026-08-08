@@ -1,10 +1,17 @@
 class_name Enemy extends CharacterBody2D
 
-@export var health: int = 4
-@export var damage: float = .25
+signal dead()
+
+@export var health: int = 10
+@export var damage: float = 1
+
+@onready var animation_player: AnimationPlayer = $AnimationPlayer
 
 func _process(delta: float) -> void:
 	if health <= 0:
+		dead.emit()
+		animation_player.play("death")
+		await(get_tree().create_timer(1.0).timeout)
 		queue_free()
 
 func _on_hitbox_area_entered(area: Area2D) -> void:
